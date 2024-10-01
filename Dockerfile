@@ -1,13 +1,26 @@
-FROM alpine:3.19
+FROM alpine:3.20 AS build
+
+WORKDIR /app
+
+RUN apk update \
+	&& apk upgrade \
+	&& apk add go
+
+COPY main.go /app/main.go
+
+RUN go mod init github.com/itbm/postgresql-backup-s3 \
+	&& go get github.com/robfig/cron/v3 \
+	&& go build -o out/go-cron
+
+FROM alpine:3.20
 LABEL maintainer="ITBM"
 
 RUN apk update \
 	&& apk upgrade \
-	&& apk add coreutils postgresql16-client aws-cli openssl curl \
-	&& curl -L --insecure https://github.com/odise/go-cron/releases/download/v0.0.7/go-cron-linux.gz | zcat > /usr/local/bin/go-cron \
- 	&& chmod u+x /usr/local/bin/go-cron \
-	&& apk del curl \
+	&& apk add coreutils postgresql16-client aws-cli openssl \
 	&& rm -rf /var/cache/apk/*
+
+COPY --from=build /app/out/go-cron /usr/local/bin/go-cron
 
 ENV POSTGRES_DATABASE **None**
 ENV POSTGRES_HOST **None**
