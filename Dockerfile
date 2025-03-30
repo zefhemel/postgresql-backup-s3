@@ -17,7 +17,7 @@ LABEL maintainer="ITBM"
 
 RUN apk update \
 	&& apk upgrade \
-	&& apk add coreutils postgresql17-client aws-cli openssl \
+	&& apk add coreutils postgresql17-client aws-cli openssl pigz \
 	&& rm -rf /var/cache/apk/*
 
 COPY --from=build /app/out/go-cron /usr/local/bin/go-cron
@@ -41,6 +41,8 @@ ENV DELETE_OLDER_THAN **None**
 ENV BACKUP_FILE **None**
 ENV CREATE_DATABASE no
 ENV DROP_DATABASE no
+ENV COMPRESSION_CMD 'gzip'
+ENV DECOMPRESSION_CMD 'gunzip -c'
 
 ADD run.sh run.sh
 ADD backup.sh backup.sh

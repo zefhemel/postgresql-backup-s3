@@ -92,6 +92,8 @@ spec:
 | SCHEDULE             |           |          | Backup schedule time, see explainatons below                                                                             |
 | ENCRYPTION_PASSWORD  |           |          | Password to encrypt/decrypt the backup                                                                                  |
 | DELETE_OLDER_THAN    |           |          | Delete old backups, see explanation and warning below                                                                    |
+| COMPRESSION_CMD      | gzip      |          | Command used to compress the backup (e.g. `pigz` for parallel compression)                                              |
+| DECOMPRESSION_CMD    | gunzip -c |          | Command used to decompress the backup (e.g. `pigz -dc` for parallel decompression)                                      |
 | BACKUP_FILE          |           | Y*       | Required for restore. The path to the backup file in S3, format: S3_PREFIX/filename                                      |
 | CREATE_DATABASE      | no        |          | For restore: Set to `yes` to create the database if it doesn't exist                                                     |
 | DROP_DATABASE        | no        |          | For restore: Set to `yes` to drop the database before restoring (caution: destroys existing data). Use with CREATE_DATABASE=yes to recreate it |
@@ -111,3 +113,13 @@ WARNING: this will delete all files in the S3_PREFIX path, not just those create
 ### Encryption
 
 You can additionally set the `ENCRYPTION_PASSWORD` environment variable like `-e ENCRYPTION_PASSWORD="superstrongpassword"` to encrypt the backup. The restore process will automatically detect encrypted backups and decrypt them when the `ENCRYPTION_PASSWORD` environment variable is set correctly. It can be manually decrypted using `openssl aes-256-cbc -d -in backup.sql.gz.enc -out backup.sql.gz`.
+
+### Compression Options
+
+By default, backups are compressed with `gzip` and decompressed with `gunzip -c`. For improved performance on multi-core systems, you can use `pigz` (parallel gzip) instead:
+
+```sh
+$ docker run ... -e COMPRESSION_CMD=pigz ... itbm/postgres-backup-s3
+
+$ docker run ... -e DECOMPRESSION_CMD="pigz -dc" ... itbm/postgres-backup-s3
+```

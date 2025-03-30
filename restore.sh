@@ -127,12 +127,13 @@ if [ "${CREATE_DATABASE}" = "yes" ]; then
 fi
 
 if [[ "$DOWNLOAD_PATH" == *.sql.gz ]]; then
+  DECOMPRESSION_CMD=${DECOMPRESSION_CMD:-"gunzip -c"}
   if [ "${POSTGRES_DATABASE}" == "all" ]; then
     echo "Restoring all databases"
-    gunzip -c $DOWNLOAD_PATH | psql $POSTGRES_HOST_OPTS -d postgres
+    $DECOMPRESSION_CMD $DOWNLOAD_PATH | psql $POSTGRES_HOST_OPTS -d postgres
   else
     echo "Restoring database ${POSTGRES_DATABASE}"
-    gunzip -c $DOWNLOAD_PATH | psql $POSTGRES_HOST_OPTS -d $POSTGRES_DATABASE
+    $DECOMPRESSION_CMD $DOWNLOAD_PATH | psql $POSTGRES_HOST_OPTS -d $POSTGRES_DATABASE
   fi
 else
   echo "ERROR: Unsupported backup format. Expected *.sql.gz file."
