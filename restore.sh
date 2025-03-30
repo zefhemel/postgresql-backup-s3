@@ -127,7 +127,6 @@ if [ "${CREATE_DATABASE}" = "yes" ]; then
 fi
 
 if [[ "$DOWNLOAD_PATH" == *.sql.gz ]]; then
-  DECOMPRESSION_CMD=${DECOMPRESSION_CMD:-"gunzip -c"}
   if [ "${POSTGRES_DATABASE}" == "all" ]; then
     echo "Restoring all databases"
     $DECOMPRESSION_CMD $DOWNLOAD_PATH | psql $POSTGRES_HOST_OPTS -d postgres
@@ -135,8 +134,21 @@ if [[ "$DOWNLOAD_PATH" == *.sql.gz ]]; then
     echo "Restoring database ${POSTGRES_DATABASE}"
     $DECOMPRESSION_CMD $DOWNLOAD_PATH | psql $POSTGRES_HOST_OPTS -d $POSTGRES_DATABASE
   fi
+elif [[ "$DOWNLOAD_PATH" == *.dump ]]; then
+  if [ "${POSTGRES_DATABASE}" == "all" ]; then
+    echo "ERROR: Custom format backup cannot be used to restore all databases."
+    exit 1
+  else
+    echo "Restoring database ${POSTGRES_DATABASE} from custom format"
+    if [ "$PARALLEL_JOBS" -gt 1 ]; then
+      echo "Using parallel restore with $PARALLEL_JOBS jobs"
+      pg_restore -j $PARALLEL_JOBS $POSTGRES_HOST_OPTS -d $POSTGRES_DATABASE $DOWNLOAD_PATH
+    else
+      pg_restore $POSTGRES_HOST_OPTS -d $POSTGRES_DATABASE $DOWNLOAD_PATH
+    fi
+  fi
 else
-  echo "ERROR: Unsupported backup format. Expected *.sql.gz file."
+  echo "ERROR: Unsupported backup format. Expected *.sql.gz or *.dump file."
   exit 1
 fi
 

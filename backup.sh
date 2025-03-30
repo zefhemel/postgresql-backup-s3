@@ -60,15 +60,23 @@ POSTGRES_HOST_OPTS="-h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER $POSTG
 
 echo "Creating dump of ${POSTGRES_DATABASE} database from ${POSTGRES_HOST}..."
 
-SRC_FILE=dump.sql.gz
-DEST_FILE=${POSTGRES_DATABASE}_$(date +"%Y-%m-%dT%H:%M:%SZ").sql.gz
-
-COMPRESSION_CMD=${COMPRESSION_CMD:-gzip}
-
-if [ "${POSTGRES_DATABASE}" == "all" ]; then
-  pg_dumpall $POSTGRES_HOST_OPTS | $COMPRESSION_CMD > $SRC_FILE
+if [ "$USE_CUSTOM_FORMAT" = "yes" ]; then
+  SRC_FILE=dump.dump
+  DEST_FILE=${POSTGRES_DATABASE}_$(date +"%Y-%m-%dT%H:%M:%SZ").dump
+  if [ "${POSTGRES_DATABASE}" == "all" ]; then
+    echo "ERROR: Custom format (-Fc) is not supported with pg_dumpall."
+    exit 1
+  else
+    pg_dump -Fc $POSTGRES_HOST_OPTS $POSTGRES_DATABASE > $SRC_FILE
+  fi
 else
-  pg_dump $POSTGRES_HOST_OPTS $POSTGRES_DATABASE | $COMPRESSION_CMD > $SRC_FILE
+  SRC_FILE=dump.sql.gz
+  DEST_FILE=${POSTGRES_DATABASE}_$(date +"%Y-%m-%dT%H:%M:%SZ").sql.gz
+  if [ "${POSTGRES_DATABASE}" == "all" ]; then
+    pg_dumpall $POSTGRES_HOST_OPTS | $COMPRESSION_CMD > $SRC_FILE
+  else
+    pg_dump $POSTGRES_HOST_OPTS $POSTGRES_DATABASE | $COMPRESSION_CMD > $SRC_FILE
+  fi
 fi
 
 
