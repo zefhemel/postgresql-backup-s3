@@ -99,7 +99,7 @@ spec:
          emptyDir: {}
 ```
 
-## Kubernetes Deployment - Restore
+## Kubernetes Job - Restore
 
 ```
 apiVersion: v1
