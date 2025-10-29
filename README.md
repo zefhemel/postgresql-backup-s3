@@ -45,8 +45,9 @@ spec:
     spec:
       containers:
       - name: postgresql
-        image: itbm/postgresql-backup-s3
+        image: ghcr.io/techcrazi/postgresql-backup-s3:latest
         imagePullPolicy: Always
+        command: ["/bin/sh", "/usr/local/bin/backup.sh"]
         env:
         - name: POSTGRES_DATABASE
           value: ""
